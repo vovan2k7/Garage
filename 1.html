@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Мой гараж">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f172a">
+<meta name="description" content="Учёт заправок, замены масла и каталог запчастей">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<title>Мой гараж — бензин, масло и запчасти</title>
+<style>
+:root, html[data-theme="dark"]{
+  --bg1:#0f172a; --bg2:#1e293b; --card:#1e293b; --card2:#334155;
+  --border:#273449; --accent:#f59e0b; --accent2:#fbbf24;
+  --text:#f1f5f9; --muted:#94a3b8; --danger:#ef4444;
+}
+html[data-theme="light"]{
+  --bg1:#f8fafc; --bg2:#e2e8f0; --card:#ffffff; --card2:#f1f5f9;
+  --border:#e2e8f0; --accent:#f59e0b; --accent2:#d97706;
+  --text:#0f172a; --muted:#64748b; --danger:#ef4444;
+}
+@media (prefers-color-scheme: light){
+  html[data-theme="auto"]{
+    --bg1:#f8fafc; --bg2:#e2e8f0; --card:#ffffff; --card2:#f1f5f9;
+    --border:#e2e8f0; --accent:#f59e0b; --accent2:#d97706;
+    --text:#0f172a; --muted:#64748b; --danger:#ef4444;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
+  background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 100%);
+  background-attachment:fixed; color:var(--text);
+  min-height:100vh; min-height:100dvh;
+  font-size:17px; line-height:1.4;
+  padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px);
+  -webkit-font-smoothing:antialiased; transition:background .2s,color .2s;
+}
+.app{max-width:520px;margin:0 auto}
+.screen{display:none;animation:fade .2s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:30px;margin:8px 0 4px;letter-spacing:-0.5px}
+h2{font-size:22px;margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+h3.section-title{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin:20px 0 10px;font-weight:600}
+.sub{color:var(--muted);margin:0 0 20px;font-size:15px}
+
+/* car picker */
+.car-picker{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px;scrollbar-width:none}
+.car-picker::-webkit-scrollbar{display:none}
+.car-chip{
+  flex:0 0 auto; background:var(--card); border:1px solid var(--border);
+  border-radius:999px; padding:8px 16px; font:inherit; font-size:15px;
+  color:var(--text); cursor:pointer; white-space:nowrap;
+  display:flex; align-items:center; gap:8px; transition:all .15s;
+}
+.car-chip svg{width:20px;height:20px;transition:fill .15s}
+.car-chip.active{font-weight:600; color:#111}
+.car-chip.add{color:var(--accent); font-weight:600; background:transparent; border:1px dashed var(--accent); padding:8px 14px}
+
+/* menu */
+.menu{display:flex;flex-direction:column;gap:14px}
+.menu-btn{
+  display:flex;align-items:center;gap:16px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:18px; padding:18px 20px; min-height:88px;
+  color:var(--text); font:inherit; text-align:left; cursor:pointer; width:100%;
+  transition:transform .08s, background .15s; user-select:none;
+}
+.menu-btn:active{transform:scale(.98);background:var(--card2)}
+.menu-btn .icon{font-size:32px;flex:0 0 auto;line-height:1}
+.menu-btn .text{display:flex;flex-direction:column;flex:1;min-width:0}
+.menu-btn strong{font-size:19px;font-weight:600;margin-bottom:2px}
+.menu-btn small{color:var(--muted);font-size:14px}
+.menu-btn .chev{font-size:28px;color:var(--muted);font-weight:300}
+
+/* header */
+.screen-header{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.back{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--card);border:1px solid var(--border);color:var(--text);
+  font-size:26px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 0 4px;flex:0 0 auto;
+}
+.back:active{background:var(--card2)}
+.home-btn{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--card);border:1px solid var(--border);color:var(--text);
+  font-size:19px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  padding:0;flex:0 0 auto;line-height:1;
+}
+.home-btn:active{background:var(--card2)}
+
+/* forms */
+form{display:flex;flex-direction:column;gap:14px}
+label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+label input, label select{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:14px 16px; font-size:17px; color:var(--text);
+  font-family:inherit; outline:none; transition:border .15s; width:100%;
+  -webkit-appearance:none; appearance:none;
+}
+label input:focus, label select:focus{border-color:var(--accent)}
+label input::placeholder{color:var(--muted);opacity:.6}
+.submit{
+  margin-top:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#111; border:none; border-radius:14px; padding:18px;
+  font-size:18px; font-weight:700; cursor:pointer;
+  transition:transform .08s; user-select:none;
+}
+.submit:active{transform:scale(.98)}
+.submit.secondary{background:var(--card); color:var(--text); border:1px solid var(--border); font-size:16px; padding:16px}
+.hint{color:var(--muted);font-size:13px;text-align:center;margin-top:16px;padding:0 8px}
+
+/* history/records */
+.record{
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:14px 16px; display:flex; justify-content:space-between;
+  align-items:center; margin-bottom:10px; gap:10px;
+}
+.record-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.record-info strong{font-size:16px}
+.record-info small{color:var(--muted);font-size:13px}
+.del{background:transparent;border:none;color:var(--danger);font-size:22px;padding:8px 12px;cursor:pointer;border-radius:8px}
+.del:active{background:rgba(239,68,68,.15)}
+.empty{color:var(--muted);text-align:center;padding:40px 20px;font-size:15px}
+
+/* warning banner */
+.warning-banner{
+  background: rgba(245,158,11,.15); border:1px solid var(--accent);
+  color: var(--accent2); border-radius: 12px; padding: 14px 16px;
+  margin-bottom: 16px; font-weight: 600; font-size: 15px; line-height: 1.35;
+}
+.warning-banner.danger{
+  background: rgba(239,68,68,.15); border-color: var(--danger); color: var(--danger);
+}
+.warning-banner small{
+  display: block; font-weight: 400; font-size: 13px; opacity: .8; margin-top: 4px; color: var(--text);
+}
+
+/* stats */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+.stat .label{color:var(--muted);font-size:13px;margin-bottom:6px}
+.stat .value{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.stat .value small{font-size:13px;color:var(--muted);font-weight:400;margin-left:2px}
+.stat.big{grid-column:1/-1}
+.stat.big .value{font-size:28px;color:var(--accent2)}
+
+/* chart */
+.chart-controls{display:flex;gap:8px;margin-bottom:12px}
+.chip{
+  flex:1; background:var(--card); border:1px solid var(--border);
+  border-radius:10px; padding:10px; font:inherit; font-size:14px;
+  color:var(--text); cursor:pointer; transition:all .15s; font-weight:500;
+}
+.chip.active{background:var(--accent); color:#111; border-color:var(--accent); font-weight:700}
+.chart-box{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 10px}
+.chart-box svg{display:block}
+
+/* category/subcategory rows */
+.category-row{
+  display:flex; align-items:center; gap:14px; width:100%;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:16px 18px; margin-bottom:10px;
+  color:var(--text); font:inherit; text-align:left; cursor:pointer;
+  transition:transform .08s, background .15s; user-select:none;
+}
+.category-row:active{transform:scale(.98);background:var(--card2)}
+.category-row.sub{background:transparent; border-style:dashed}
+.category-row .cat-info{display:flex; flex-direction:column; gap:3px; flex:1; min-width:0}
+.category-row .cat-info strong{font-size:17px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.category-row .cat-info small{color:var(--muted); font-size:13px}
+.category-row .chev{font-size:26px; color:var(--muted); font-weight:300}
+
+/* part card */
+.part-card{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:14px 16px; margin-bottom:10px;
+}
+.part-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.part-actions{display:flex;gap:0;margin:-6px -6px 0 0}
+.icon-btn{background:transparent;border:none;color:var(--muted);font-size:18px;padding:8px 10px;cursor:pointer;border-radius:8px}
+.icon-btn:active{background:var(--card2)}
+.icon-btn.danger{color:var(--danger)}
+.part-name{font-size:17px;font-weight:600;margin:0 0 3px}
+.part-manufacturer{color:var(--muted);font-size:14px;margin-bottom:12px}
+.part-footer{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.part-price{font-size:18px;font-weight:700;color:var(--accent2)}
+.part-open{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#111; text-decoration:none; font-weight:700; font-size:14px;
+  padding:10px 16px; border-radius:10px; display:inline-flex;
+  align-items:center; gap:4px; transition:transform .08s;
+}
+.part-open:active{transform:scale(.96)}
+
+/* settings */
+.chips{display:flex;gap:8px;margin-bottom:4px}
+.cars-list{margin-bottom:12px}
+.car-row{
+  display:flex;align-items:center;gap:8px; background:var(--card);
+  border:1px solid var(--border); border-radius:12px;
+  padding:12px 14px; margin-bottom:8px;
+}
+.car-row svg{width:24px;height:24px;flex:0 0 auto}
+.car-row .name{flex:1;font-size:16px;font-weight:500;margin-left:4px}
+.car-row .name .tag{font-size:12px;color:var(--accent);margin-left:6px;font-weight:600}
+
+/* toast */
+.toast{
+  position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 24px);
+  transform:translateX(-50%) translateY(100px);
+  background:var(--accent); color:#111; padding:12px 20px; border-radius:24px;
+  font-weight:600; font-size:15px; opacity:0; transition:all .3s;
+  z-index:1000; pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+  padding:20px;
+  -webkit-backdrop-filter:blur(6px);
+  backdrop-filter:blur(6px);
+  animation:fadeModal .18s ease;
+}
+.modal-overlay.show{display:flex}
+@keyframes fadeModal{from{opacity:0}to{opacity:1}}
+.modal-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:22px 20px 20px;
+  max-width:400px;
+  width:100%;
+  color:var(--text);
+  box-shadow:0 20px 60px rgba(0,0,0,.4);
+  animation:popModal .2s ease;
+}
+@keyframes popModal{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-card h3{font-size:19px;margin:0 0 10px;font-weight:700;letter-spacing:-0.3px}
+.modal-card p{
+  font-size:15px;margin:0 0 16px;color:var(--muted);
+  white-space:pre-line;line-height:1.45;
+}
+.modal-card input{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  width:100%;
+  font-size:17px;
+  color:var(--text);
+  margin-bottom:18px;
+  font-family:inherit;
+  outline:none;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.modal-card input:focus{border-color:var(--accent)}
+.modal-card input.hidden{display:none}
+
+/* палитра цветов */
+.color-grid{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:12px;
+  margin-bottom:22px;
+  margin-top:10px;
+}
+.color-swatch{
+  width:100%;
+  aspect-ratio:1;
+  border-radius:50%;
+  border:3px solid transparent;
+  cursor:pointer;
+  transition:transform .12s;
+  position:relative;
+}
+.color-swatch:active{transform:scale(.92)}
+.color-swatch.selected::after{
+  content:'✓';
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:bold;
+  font-size:20px;
+  text-shadow:0 1px 3px rgba(0,0,0,.4);
+}
+
+.modal-actions{display:flex;gap:10px}
+.modal-btn{
+  flex:1;
+  padding:14px;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:600;
+  border:none;
+  cursor:pointer;
+  font-family:inherit;
+  transition:transform .08s;
+}
+.modal-btn:active{transform:scale(.97)}
+.modal-btn.secondary{background:var(--bg2);color:var(--text);border:1px solid var(--border)}
+.modal-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#111}
+.modal-btn.danger{background:var(--danger);color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ========== ГЛАВНЫЙ ========== -->
+  <section id="screen-home" class="screen active">
+    <h1>⛽ Мой гараж</h1>
+    <p class="sub">Топливо, масло и запчасти</p>
+    <div class="car-picker" id="carPicker"></div>
+    <div id="homeOilReminder"></div>
+    <nav class="menu">
+      <button class="menu-btn" data-nav="screen-add">
+        <span class="icon">➕</span>
+        <div class="text"><strong>Добавить заправку</strong><small>Литры, сумма, пробег</small></div>
+        <span class="chev">›</span>
+      </button>
+      <button class="menu-btn" data-nav="screen-oil">
+        <span class="icon">🛢️</span>
+        <div class="text"><strong>Замена масла</strong><small data-oil-badge>История и пробег</small></div>
+        <span class="chev">›</span>
+      </button>
+      <button class="menu-btn" data-nav="screen-parts">
+        <span class="icon">🛠</span>
+        <div class="text"><strong>Запчасти</strong><small data-parts-badge>Каталог по категориям</small></div>
+        <span class="chev">›</span>
+      </button>
+      <button class="menu-btn" data-nav="screen-stats">
+        <span class="icon">📊</span>
+        <div class="text"><strong>Статистика</strong><small>Расход и график по месяцам</small></div>
+        <span class="chev">›</span>
+      </button>
+      <button class="menu-btn" data-nav="screen-history">
+        <span class="icon">📋</span>
+        <div class="text"><strong>История заправок</strong><small>Все записи машины</small></div>
+        <span class="chev">›</span>
+      </button>
+      <button class="menu-btn" data-nav="screen-settings">
+        <span class="icon">⚙️</span>
+        <div class="text"><strong>Настройки</strong><small>Машины, тема, экспорт</small></div>
+        <span class="chev">›</span>
+      </button>
+    </nav>
+  </section>
+
+  <!-- ========== ФОРМА ЗАПРАВКИ ========== -->
+  <section id="screen-add" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-home">‹</button>
+      <h2>Новая заправка</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <p class="sub" id="addCarLabel"></p>
+    <form id="addForm" autocomplete="off">
+      <label>Дата <input type="date" name="date" required></label>
+      <label>Литры <input type="number" name="liters" inputmode="decimal" step="0.01" min="0" placeholder="35.5" required></label>
+      <label>Сумма (₽) <input type="number" name="cost" inputmode="decimal" step="0.01" min="0" placeholder="2500"></label>
+      <label>Цена за литр (₽) <input type="number" name="price" inputmode="decimal" step="0.01" min="0" placeholder="70.50"></label>
+      <label>Одометр (км) <input type="number" name="odometer" inputmode="numeric" step="1" min="0" placeholder="45230"></label>
+      <button type="submit" class="submit">Сохранить заправку</button>
+    </form>
+    <p class="hint">Достаточно указать литры. Сумма ⇄ цена за литр пересчитываются сами.</p>
+  </section>
+
+  <!-- ========== ИСТОРИЯ ЗАМЕНЫ МАСЛА ========== -->
+  <section id="screen-oil" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-home">‹</button>
+      <h2>Замена масла</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <p class="sub" id="oilCarLabel"></p>
+    <div id="oilReminderBanner"></div>
+    <div id="oilList"></div>
+    <button class="submit" id="addOilBtn" style="margin-top:16px">+ Добавить замену масла</button>
+  </section>
+
+  <!-- ========== ФОРМА ЗАМЕНЫ МАСЛА ========== -->
+  <section id="screen-oil-edit" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-oil">‹</button>
+      <h2 id="oilEditTitle">Новая замена</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <form id="oilForm" autocomplete="off">
+      <label>Дата <input type="date" name="date" required></label>
+      <label>Одометр (км) <input type="number" name="odometer" inputmode="numeric" step="1" min="0" placeholder="120000"></label>
+      <label>Масло (марка, вязкость) <input name="oil" placeholder="Mobil 1 5W-30" required></label>
+      <label>Стоимость (₽) <input type="number" name="cost" inputmode="decimal" step="0.01" min="0" placeholder="4500"></label>
+      <label>Заметки <input name="notes" placeholder="Замена фильтра, доливка и т.д."></label>
+      <button type="submit" class="submit">Сохранить</button>
+    </form>
+    <p class="hint">Одометр подставится автоматически из последней заправки, если он там был указан.</p>
+  </section>
+
+  <!-- ========== КАТАЛОГ: КАТЕГОРИИ ========== -->
+  <section id="screen-parts" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-home">‹</button>
+      <h2>Категории</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <div class="car-picker" id="partsCarPicker"></div>
+    <p class="sub" id="partsSummary">—</p>
+    <div id="categoriesList"></div>
+    <button class="submit" id="addPartBtn" style="margin-top:16px">+ Добавить запчасть</button>
+  </section>
+
+  <!-- ========== КАТАЛОГ: ПОДКАТЕГОРИИ ========== -->
+  <section id="screen-parts-cat" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-parts">‹</button>
+      <h2 id="catTitle">Категория</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <p class="sub" id="catSummary"></p>
+    <div id="categoryContent"></div>
+    <button class="submit" id="addPartBtn2" style="margin-top:16px">+ Добавить в эту категорию</button>
+  </section>
+
+  <!-- ========== КАТАЛОГ: ЗАПЧАСТИ ПОДКАТЕГОРИИ ========== -->
+  <section id="screen-parts-subcat" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-parts-cat">‹</button>
+      <h2 id="subcatTitle">Подкатегория</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <p class="sub" id="subcatSummary"></p>
+    <div id="subcatPartsList"></div>
+    <button class="submit" id="addPartBtn3" style="margin-top:16px">+ Добавить в эту подкатегорию</button>
+  </section>
+
+  <!-- ========== РЕДАКТОР ЗАПЧАСТИ ========== -->
+  <section id="screen-part-edit" class="screen">
+    <div class="screen-header">
+      <button class="back" id="partEditBack">‹</button>
+      <h2 id="partEditTitle">Новая запчасть</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <form id="partForm" autocomplete="off">
+      <label>Категория <input list="catList" name="category" placeholder="Фильтры"><datalist id="catList"></datalist></label>
+      <label>Подкатегория <input list="subcatList" name="subcategory" placeholder="Масляные фильтры"><datalist id="subcatList"></datalist></label>
+      <label>Название <input name="name" placeholder="Масляный фильтр" required></label>
+      <label>Производитель <input name="manufacturer" placeholder="MANN-FILTER"></label>
+      <label>Стоимость (₽) <input type="number" name="cost" inputmode="decimal" step="0.01" min="0" placeholder="850"></label>
+      <label>Ссылка на товар <input type="text" name="url" inputmode="url" placeholder="https://... или ozon.ru/..."></label>
+      <button type="submit" class="submit">Сохранить</button>
+    </form>
+    <p class="hint">Категория и подкатегория необязательны.</p>
+  </section>
+
+  <!-- ========== СТАТИСТИКА ========== -->
+  <section id="screen-stats" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-home">‹</button>
+      <h2>Статистика</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <p class="sub" id="statsCarLabel"></p>
+    <div id="statsSummary"></div>
+    <h3 class="section-title">По месяцам</h3>
+    <div class="chart-controls">
+      <button class="chip active" data-mode="cost">₽</button>
+      <button class="chip" data-mode="liters">Литры</button>
+      <button class="chip" data-mode="cons">л/100км</button>
+    </div>
+    <div class="chart-box" id="chartBox"></div>
+  </section>
+
+  <!-- ========== ИСТОРИЯ ЗАПРАВОК ========== -->
+  <section id="screen-history" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-home">‹</button>
+      <h2>История</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <p class="sub" id="historyCarLabel"></p>
+    <div id="historyBody"></div>
+  </section>
+
+  <!-- ========== НАСТРОЙКИ ========== -->
+  <section id="screen-settings" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-home">‹</button>
+      <h2>Настройки</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <h3 class="section-title">Оформление</h3>
+    <div class="chips" id="themePicker">
+      <button class="chip" data-theme="auto">Авто</button>
+      <button class="chip" data-theme="light">Светлая</button>
+      <button class="chip" data-theme="dark">Тёмная</button>
+    </div>
+    <h3 class="section-title">Мои машины</h3>
+    <div class="cars-list" id="carsList"></div>
+    <button class="submit secondary" id="addCarBtn">+ Добавить машину</button>
+    <h3 class="section-title">Экспорт</h3>
+    <button class="submit secondary" id="exportFuelBtn">⬇️ Заправки (CSV)</button>
+    <button class="submit secondary" id="exportOilBtn" style="margin-top:8px">⬇️ Замены масла (CSV)</button>
+    <button class="submit secondary" id="exportPartsBtn" style="margin-top:8px">⬇️ Запчасти (CSV)</button>
+    <p class="hint">Файл сохранится через «Поделиться» → «Сохранить в Файлы».</p>
+    <p class="hint" id="swStatus" style="margin-top:20px"></p>
+  </section>
+
+</div>
+<div id="toast" class="toast"></div>
+
+<!-- ========== МОДАЛЬНОЕ ОКНО ========== -->
+<div id="modalOverlay" class="modal-overlay">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3 id="modalTitle"></h3>
+    <p id="modalMessage"></p>
+    <input id="modalInput" type="text" autocomplete="off">
+    <div id="modalColors" class="color-grid hidden"></div>
+    <div class="modal-actions">
+      <button id="modalCancel" class="modal-btn secondary" type="button">Отмена</button>
+      <button id="modalOk" class="modal-btn primary" type="button">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== ДАННЫЕ ===================== */
+const KEY = 'fuel_state_v2';
+const DEFAULT_CATEGORIES = ['Масло и жидкости','Фильтры','Тормоза','Подвеска','Двигатель','Электрика','Кузов','Расходники','Другое'];
+const NO_CAT = 'Без категории';
+const OIL_INTERVAL_KM = 10000;
+const OIL_INTERVAL_DAYS = 365;
+
+const CAR_COLORS = [
+  '#ef4444', // red
+  '#f59e0b', // orange
+  '#eab308', // yellow
+  '#22c55e', // green
+  '#3b82f6', // blue
+  '#a855f7', // purple
+  '#ec4899', // pink
+  '#64748b'  // gray
+];
+
+let state = loadState();
+let chartMode = 'cost';
+let editingPartId = null;
+let editingOilId = null;
+let activeCategory = null;
+let activeSubcategory = null;
+let partFormReturnTo = 'screen-parts';
+
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if(s && Array.isArray(s.cars) && s.cars.length){
+      if(!Array.isArray(s.parts)) s.parts = [];
+      if(!Array.isArray(s.oilChanges)) s.oilChanges = [];
+      s.parts.forEach(p => { if(typeof p.subcategory !== 'string') p.subcategory = ''; });
+      // Миграция цветов для старых пользователей
+      s.cars.forEach(c => { if(!c.color) c.color = CAR_COLORS[0]; });
+      return s;
+    }
+  }catch(e){}
+  let old = [];
+  try{ old = JSON.parse(localStorage.getItem('fuel_records_v1')) || []; }catch(e){}
+  const carId = 'car_' + Date.now();
+  return {
+    cars: [{ id: carId, name: 'Моя машина', color: CAR_COLORS[0] }],
+    activeCar: carId,
+    records: old.map(r => ({ ...r, carId })),
+    parts: [],
+    oilChanges: [],
+    theme: 'auto'
+  };
+}
+function saveState(){
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ console.warn('localStorage недоступен', e); }
+}
+
+function activeCar(){ return state.cars.find(c => c.id === state.activeCar) || state.cars[0]; }
+function carRecords(){ return state.records.filter(r => r.carId === state.activeCar); }
+function carParts(){ return state.parts.filter(p => p.carId === state.activeCar); }
+function carOilChanges(){ return state.oilChanges.filter(o => o.carId === state.activeCar); }
+
+function partCategory(p){ return (p.category || '').trim() || NO_CAT; }
+function partSubcategory(p){ return (p.subcategory || '').trim(); }
+function partsInCategory(cat){ return carParts().filter(p => partCategory(p) === cat); }
+function partsInSubcategory(cat, subcat){ return partsInCategory(cat).filter(p => partSubcategory(p) === subcat); }
+function partsDirectInCategory(cat){ return partsInCategory(cat).filter(p => !partSubcategory(p)); }
+function subcategoriesInCategory(cat){
+  const set = new Set();
+  partsInCategory(cat).forEach(p => { const sc = partSubcategory(p); if(sc) set.add(sc); });
+  return [...set].sort((a,b) => a.localeCompare(b, 'ru'));
+}
+
+/* ===================== МОДАЛЬНЫЕ ОКНА ===================== */
+function showModal({ title, message, input, defaultValue, colors, currentColor, okText, cancelText, danger }){
+  return new Promise(resolve => {
+    const overlay = document.getElementById('modalOverlay');
+    const titleEl = document.getElementById('modalTitle');
+    const messageEl = document.getElementById('modalMessage');
+    const inputEl = document.getElementById('modalInput');
+    const colorsEl = document.getElementById('modalColors');
+    const okBtn = document.getElementById('modalOk');
+    const cancelBtn = document.getElementById('modalCancel');
+
+    titleEl.textContent = title || '';
+    messageEl.textContent = message || '';
+    messageEl.style.display = message ? 'block' : 'none';
+
+    // Сброс видимости
+    inputEl.classList.add('hidden');
+    colorsEl.classList.add('hidden');
+
+    if (input) {
+      inputEl.classList.remove('hidden');
+      inputEl.value = defaultValue || '';
+      setTimeout(() => { inputEl.focus(); inputEl.select && inputEl.select(); }, 60);
+    }
+    
+    let selectedColor = currentColor;
+    if (colors) {
+      colorsEl.classList.remove('hidden');
+      colorsEl.innerHTML = colors.map(c => `
+        <button class="color-swatch ${c === currentColor ? 'selected' : ''}" style="background:${c}" data-color="${c}" type="button"></button>
+      `).join('');
+      
+      colorsEl.querySelectorAll('.color-swatch').forEach(btn => {
+        btn.onclick = () => {
+          colorsEl.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedColor = btn.dataset.color;
+        };
+      });
+    }
+
+    okBtn.textContent = okText || 'OK';
+    okBtn.className = 'modal-btn ' + (danger ? 'danger' : 'primary');
+    cancelBtn.textContent = cancelText || 'Отмена';
+
+    overlay.classList.add('show');
+
+    const cleanup = () => {
+      overlay.classList.remove('show');
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      inputEl.onkeydown = null;
+      overlay.onclick = null;
+    };
+
+    okBtn.onclick = () => {
+      let value = true;
+      if (input) value = inputEl.value.trim();
+      else if (colors) value = selectedColor;
+      cleanup();
+      resolve(value);
+    };
+    cancelBtn.onclick = () => {
+      cleanup();
+      resolve(null);
+    };
+    if (input) {
+      inputEl.onkeydown = (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); okBtn.click(); }
+        if (e.key === 'Escape') { e.preventDefault(); cancelBtn.click(); }
+      };
+    }
+    overlay.onclick = (e) => {
+      if (e.target === overlay) { cleanup(); resolve(null); }
+    };
+  });
+}
+
+function askText(title, message, defaultValue){
+  return showModal({ title, message, input: true, defaultValue, okText: 'Сохранить' });
+}
+function askConfirm(title, message){
+  return showModal({ title, message, okText: 'Удалить', danger: true });
+}
+function askColor(title, currentColor){
+  return showModal({ title, colors: CAR_COLORS, currentColor, okText: 'Выбрать' });
+}
+
+/* ===================== ТЕМА ===================== */
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', state.theme || 'auto');
+  document.querySelectorAll('#themePicker [data-theme]').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === (state.theme || 'auto'));
+  });
+}
+
+/* ===================== НАВИГАЦИЯ ===================== */
+function nav(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+  if(id === 'screen-home'){ renderCarPicker(); updateBadges(); renderHomeOilReminder(); }
+  if(id === 'screen-add') document.getElementById('addCarLabel').textContent = activeCar().name;
+  if(id === 'screen-oil'){ document.getElementById('oilCarLabel').textContent = activeCar().name; renderOilList(); }
+  if(id === 'screen-history'){ document.getElementById('historyCarLabel').textContent = activeCar().name; renderHistory(); }
+  if(id === 'screen-stats'){ document.getElementById('statsCarLabel').textContent = activeCar().name; renderStats(); }
+  if(id === 'screen-settings'){ renderCarsList(); applyTheme(); }
+  if(id === 'screen-parts'){
+    renderCarPickerInto('partsCarPicker');
+    renderPartsSummary();
+    renderCategoriesList();
+  }
+  if(id === 'screen-parts-cat') renderCategoryScreen();
+  if(id === 'screen-parts-subcat') renderSubcategoryScreen();
+}
+document.querySelectorAll('[data-nav]').forEach(b => {
+  b.addEventListener('click', () => nav(b.dataset.nav));
+});
+document.getElementById('partEditBack').addEventListener('click', () => nav(partFormReturnTo));
+
+/* ===================== ИКОНКА АВТОМОБИЛЯ ===================== */
+function getCarSvg(color, size=20) {
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="${color}" xmlns="http://www.w3.org/2000/svg"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>`;
+}
+
+/* ===================== ПЕРЕКЛЮЧАТЕЛЬ МАШИН ===================== */
+function renderCarPickerInto(boxId){
+  const box = document.getElementById(boxId);
+  if(!box) return;
+  box.innerHTML = state.cars.map(c => {
+    const isActive = c.id === state.activeCar;
+    const style = isActive ? `style="background:${c.color}; border-color:${c.color}"` : '';
+    const iconColor = isActive ? '#111' : c.color;
+    return `
+      <button class="car-chip ${isActive ? 'active' : ''}" data-car="${c.id}" ${style}>
+        ${getCarSvg(iconColor, 20)}
+        <span>${escapeHtml(c.name)}</span>
+      </button>
+    `;
+  }).join('') + `<button class="car-chip add" data-add-car="1">+</button>`;
+
+  box.querySelectorAll('[data-car]').forEach(b => {
+    b.addEventListener('click', () => {
+      state.activeCar = b.dataset.car;
+      saveState();
+      activeCategory = null; activeSubcategory = null;
+      renderCarPickerInto('carPicker');
+      renderCarPickerInto('partsCarPicker');
+      updateBadges();
+      renderHomeOilReminder();
+      if(document.getElementById('screen-parts').classList.contains('active')){ renderPartsSummary(); renderCategoriesList(); }
+      if(document.getElementById('screen-oil').classList.contains('active')){ document.getElementById('oilCarLabel').textContent = activeCar().name; renderOilList(); }
+      if(document.getElementById('screen-parts-cat').classList.contains('active')) nav('screen-parts');
+      if(document.getElementById('screen-parts-subcat').classList.contains('active')) nav('screen-parts');
+    });
+  });
+  box.querySelector('[data-add-car]').addEventListener('click', addCar);
+}
+function renderCarPicker(){ renderCarPickerInto('carPicker'); }
+
+function updateBadges(){
+  const partsCnt = carParts().length;
+  const partsEl = document.querySelector('[data-parts-badge]');
+  if(partsEl) partsEl.textContent = partsCnt ? partsCnt + ' шт. в каталоге' : 'Каталог по категориям';
+  const oilCnt = carOilChanges().length;
+  const oilEl = document.querySelector('[data-oil-badge]');
+  if(oilEl) oilEl.textContent = oilCnt ? oilCnt + ' записей' : 'История и пробег';
+}
+
+/* ===================== МАШИНЫ ===================== */
+async function addCar(){
+  const name = await askText('Новая машина', 'Введите название:', 'Машина ' + (state.cars.length + 1));
+  if(!name) return;
+  const id = 'car_' + Date.now();
+  const color = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)]; // Случайный цвет для разнообразия
+  state.cars.push({ id, name, color });
+  state.activeCar = id;
+  saveState();
+  renderCarPickerInto('carPicker');
+  renderCarPickerInto('partsCarPicker');
+  renderCarsList();
+  updateBadges();
+  renderHomeOilReminder();
+  toast('Машина добавлена');
+}
+
+function renderCarsList(){
+  const box = document.getElementById('carsList');
+  box.innerHTML = state.cars.map(c => `
+    <div class="car-row">
+      ${getCarSvg(c.color, 24)}
+      <div class="name">${escapeHtml(c.name)}${c.id === state.activeCar ? '<span class="tag">· активная</span>' : ''}</div>
+      <button class="icon-btn" data-color="${c.id}" title="Изменить цвет">🎨</button>
+      <button class="icon-btn" data-rename="${c.id}" title="Переименовать">✎</button>
+      <button class="icon-btn danger" data-remove="${c.id}" title="Удалить" ${state.cars.length < 2 ? 'disabled style="opacity:.3"' : ''}>✕</button>
+    </div>
+  `).join('');
+
+  box.querySelectorAll('[data-color]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const car = state.cars.find(c => c.id === b.dataset.color);
+      if(!car) return;
+      const color = await askColor('Цвет машины', car.color);
+      if(!color) return;
+      car.color = color;
+      saveState();
+      renderCarsList();
+      renderCarPickerInto('carPicker');
+      renderCarPickerInto('partsCarPicker');
+      toast('Цвет обновлён');
+    });
+  });
+
+  box.querySelectorAll('[data-rename]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const car = state.cars.find(c => c.id === b.dataset.rename);
+      if(!car) return;
+      const name = await askText('Переименовать', 'Новое название машины:', car.name);
+      if(!name) return;
+      car.name = name;
+      saveState();
+      renderCarsList();
+      renderCarPickerInto('carPicker');
+      renderCarPickerInto('partsCarPicker');
+      updateBadges();
+      toast('Переименовано');
+    });
+  });
+
+  box.querySelectorAll('[data-remove]').forEach(b => {
+    b.addEventListener('click', async () => {
+      if(state.cars.length < 2) return;
+      const car = state.cars.find(c => c.id === b.dataset.remove);
+      if(!car) return;
+      const rc = state.records.filter(r => r.carId === car.id).length;
+      const pc = state.parts.filter(p => p.carId === car.id).length;
+      const oc = state.oilChanges.filter(o => o.carId === car.id).length;
+      const confirmed = await askConfirm(
+        'Удалить машину?',
+        `«${car.name}» будет удалена вместе с записями:\nЗаправок: ${rc}\nЗапчастей: ${pc}\nЗамен масла: ${oc}`
+      );
+      if(!confirmed) return;
+      state.cars = state.cars.filter(c => c.id !== car.id);
+      state.records = state.records.filter(r => r.carId !== car.id);
+      state.parts = state.parts.filter(p => p.carId !== car.id);
+      state.oilChanges = state.oilChanges.filter(o => o.carId !== car.id);
+      if(state.activeCar === car.id) state.activeCar = state.cars[0].id;
+      saveState();
+      renderCarsList();
+      renderCarPickerInto('carPicker');
+      renderCarPickerInto('partsCarPicker');
+      updateBadges();
+      renderHomeOilReminder();
+      toast('Машина удалена');
+    });
+  });
+}
+
+/* ===================== ФОРМА ЗАПРАВКИ ===================== */
+const form = document.getElementById('addForm');
+const litersInp = form.liters, costInp = form.cost, priceInp = form.price;
+
+priceInp.addEventListener('input', () => {
+  const l = parseFloat(litersInp.value), p = parseFloat(priceInp.value);
+  if(l > 0 && p > 0) costInp.value = (l * p).toFixed(2);
+});
+costInp.addEventListener('input', () => {
+  const l = parseFloat(litersInp.value), c = parseFloat(costInp.value);
+  if(l > 0 && c > 0) priceInp.value = (c / l).toFixed(2);
+});
+litersInp.addEventListener('input', () => {
+  const l = parseFloat(litersInp.value);
+  if(l > 0){
+    const p = parseFloat(priceInp.value), c = parseFloat(costInp.value);
+    if(p > 0) costInp.value = (l * p).toFixed(2);
+    else if(c > 0) priceInp.value = (c / l).toFixed(2);
+  }
+});
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  const liters = parseFloat(f.liters.value);
+  if(!(liters > 0)){ toast('Введите количество литров'); return; }
+  const cost     = parseFloat(f.cost.value) || 0;
+  const price    = parseFloat(f.price.value) || (cost ? cost / liters : 0);
+  const odometer = parseFloat(f.odometer.value) || null;
+  const date     = f.date.value || new Date().toISOString().slice(0,10);
+  state.records.push({ id: Date.now(), carId: state.activeCar, date, liters, cost, price, odometer });
+  saveState();
+  f.reset();
+  f.date.value = new Date().toISOString().slice(0,10);
+  toast('Заправка сохранена ✓');
+  setTimeout(() => nav('screen-home'), 600);
+});
+
+/* ===================== НАПОМИНАНИЕ О МАСЛЕ ===================== */
+function getOilReminderInfo(){
+  const changes = carOilChanges().sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+  if(!changes.length) return null;
+  const last = changes[0];
+  const maxFuelOdo = carRecords().reduce((m, r) => Math.max(m, r.odometer || 0), 0);
+  const maxOilOdo = changes.reduce((m, o) => Math.max(m, o.odometer || 0), 0);
+  const currentOdo = Math.max(maxFuelOdo, maxOilOdo);
+  const lastOdo = last.odometer || 0;
+  const kmSince = currentOdo > lastOdo ? currentOdo - lastOdo : 0;
+  const lastDate = new Date(last.date);
+  const now = new Date();
+  const daysSince = isNaN(lastDate) ? 0 : Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+  let status = 'ok', msg = '', details = '';
+  if(kmSince >= OIL_INTERVAL_KM || daysSince >= OIL_INTERVAL_DAYS){
+    status = 'overdue';
+    const reasons = [];
+    if(kmSince >= OIL_INTERVAL_KM) reasons.push(`пробег ${kmSince.toLocaleString('ru-RU')} км`);
+    if(daysSince >= OIL_INTERVAL_DAYS) reasons.push(`${daysSince} дн.`);
+    msg = '⚠️ Пора менять масло!';
+    details = `С последней замены: ${reasons.join(' и ')}.`;
+  } else if(kmSince >= OIL_INTERVAL_KM - 1000 || daysSince >= OIL_INTERVAL_DAYS - 30){
+    status = 'soon';
+    const remainKm = Math.max(0, OIL_INTERVAL_KM - kmSince);
+    msg = '⏰ Скоро замена масла';
+    details = remainKm > 0 ? `Осталось около ${remainKm.toLocaleString('ru-RU')} км до порога.` : 'Срок подходит к концу.';
+  }
+  if(status === 'ok') return null;
+  return { status, msg, details, lastOil: last, kmSince, daysSince };
+}
+function renderHomeOilReminder(){
+  const box = document.getElementById('homeOilReminder');
+  if(!box) return;
+  const info = getOilReminderInfo();
+  if(!info){ box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="warning-banner ${info.status === 'overdue' ? 'danger' : ''}">${info.msg}<small>${info.details} Нажмите «Замена масла», чтобы добавить запись.</small></div>`;
+}
+
+/* ===================== ЗАМЕНА МАСЛА ===================== */
+function renderOilList(){
+  const box = document.getElementById('oilList');
+  const bannerBox = document.getElementById('oilReminderBanner');
+  const info = getOilReminderInfo();
+  if(bannerBox){
+    bannerBox.innerHTML = info
+      ? `<div class="warning-banner ${info.status === 'overdue' ? 'danger' : ''}">${info.msg}<small>${info.details}</small></div>`
+      : '';
+  }
+  const changes = carOilChanges().sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+  if(!changes.length){
+    box.innerHTML = '<p class="empty">Нет записей о замене масла.<br>Добавьте первую замену.</p>';
+    return;
+  }
+  box.innerHTML = changes.map(o => `
+    <div class="record">
+      <div class="record-info">
+        <strong>${escapeHtml(o.oil)} · ${o.cost ? o.cost.toFixed(0) + ' ₽' : '—'}</strong>
+        <small>${formatDate(o.date)}${o.odometer ? ' · ' + o.odometer.toLocaleString('ru-RU') + ' км' : ''}${o.notes ? ' · ' + escapeHtml(o.notes) : ''}</small>
+      </div>
+      <button class="icon-btn" data-edit-oil="${o.id}" aria-label="Редактировать">✎</button>
+      <button class="del" data-del-oil="${o.id}" aria-label="Удалить">✕</button>
+    </div>
+  `).join('');
+
+  box.querySelectorAll('[data-edit-oil]').forEach(b => {
+    b.addEventListener('click', () => {
+      const entry = state.oilChanges.find(o => o.id === +b.dataset.editOil);
+      if(entry) openOilForm(entry);
+    });
+  });
+  box.querySelectorAll('[data-del-oil]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const confirmed = await askConfirm('Удалить запись?', 'Запись о замене масла будет удалена.');
+      if(!confirmed) return;
+      state.oilChanges = state.oilChanges.filter(o => o.id !== +b.dataset.delOil);
+      saveState();
+      updateBadges();
+      renderOilList();
+      renderHomeOilReminder();
+      toast('Удалено');
+    });
+  });
+}
+
+function openOilForm(entry = null){
+  editingOilId = entry ? entry.id : null;
+  document.getElementById('oilEditTitle').textContent = entry ? 'Редактировать' : 'Новая замена';
+  const f = document.getElementById('oilForm');
+  f.reset();
+  if(entry){
+    f.date.value = entry.date || '';
+    f.odometer.value = entry.odometer || '';
+    f.oil.value = entry.oil || '';
+    f.cost.value = entry.cost || '';
+    f.notes.value = entry.notes || '';
+  } else {
+    f.date.value = new Date().toISOString().slice(0,10);
+    const lastFuel = carRecords().filter(r => r.odometer).sort((a,b) => (b.date||'').localeCompare(a.date||''))[0];
+    const lastOil = carOilChanges().filter(o => o.odometer).sort((a,b) => (b.date||'').localeCompare(a.date||''))[0];
+    const maxOdo = Math.max(lastFuel ? lastFuel.odometer : 0, lastOil ? lastOil.odometer : 0);
+    if(maxOdo > 0) f.odometer.value = maxOdo;
+  }
+  nav('screen-oil-edit');
+}
+
+document.getElementById('addOilBtn').addEventListener('click', () => openOilForm());
+document.getElementById('oilForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  const oil = f.oil.value.trim();
+  if(!oil){ toast('Введите название масла'); return; }
+  const data = {
+    date: f.date.value || new Date().toISOString().slice(0,10),
+    odometer: parseFloat(f.odometer.value) || null,
+    oil,
+    cost: parseFloat(f.cost.value) || 0,
+    notes: f.notes.value.trim()
+  };
+  const wasEditing = !!editingOilId;
+  if(editingOilId){
+    const entry = state.oilChanges.find(o => o.id === editingOilId);
+    if(entry) Object.assign(entry, data);
+  } else {
+    state.oilChanges.push({ id: Date.now(), carId: state.activeCar, ...data });
+  }
+  saveState();
+  updateBadges();
+  toast(wasEditing ? 'Обновлено ✓' : 'Сохранено ✓');
+  editingOilId = null;
+  setTimeout(() => nav('screen-oil'), 400);
+});
+
+/* ===================== ИСТОРИЯ ЗАПРАВОК ===================== */
+function renderHistory(){
+  const box = document.getElementById('historyBody');
+  const recs = carRecords();
+  if(!recs.length){
+    box.innerHTML = '<p class="empty">Пока нет записей.<br>Добавьте первую заправку.</p>';
+    return;
+  }
+  const sorted = [...recs].sort((a,b) => (b.date || '').localeCompare(a.date || '') || (b.id - a.id));
+  box.innerHTML = sorted.map(r => `
+    <div class="record">
+      <div class="record-info">
+        <strong>${r.liters.toFixed(2)} л · ${r.cost ? r.cost.toFixed(0) + ' ₽' : '—'}</strong>
+        <small>${formatDate(r.date)}${r.odometer ? ' · ' + r.odometer.toLocaleString('ru-RU') + ' км' : ''}${r.price ? ' · ' + r.price.toFixed(2) + ' ₽/л' : ''}</small>
+      </div>
+      <button class="del" data-del="${r.id}" aria-label="Удалить">✕</button>
+    </div>
+  `).join('');
+  box.querySelectorAll('[data-del]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const confirmed = await askConfirm('Удалить заправку?', 'Запись будет удалена из истории.');
+      if(!confirmed) return;
+      state.records = state.records.filter(r => r.id !== +b.dataset.del);
+      saveState(); renderHistory(); toast('Удалено');
+    });
+  });
+}
+
+/* ===================== СТАТИСТИКА ===================== */
+function renderStats(){
+  const box = document.getElementById('statsSummary');
+  const recs = carRecords();
+  if(!recs.length){
+    box.innerHTML = '<p class="empty">Добавьте заправку, чтобы увидеть статистику.</p>';
+    document.getElementById('chartBox').innerHTML = '';
+    return;
+  }
+  const totalSpent = recs.reduce((s,r) => s + (r.cost || 0), 0);
+  const totalLiters = recs.reduce((s,r) => s + r.liters, 0);
+  const withOdo = recs.filter(r => r.odometer).sort((a,b) => a.odometer - b.odometer);
+  let distance = 0, fuelUsed = 0;
+  for(let i = 1; i < withOdo.length; i++){
+    const d = withOdo[i].odometer - withOdo[i-1].odometer;
+    if(d > 0){ distance += d; fuelUsed += withOdo[i].liters; }
+  }
+  const avgCons = distance > 0 ? (fuelUsed / distance * 100) : null;
+  const avgPrice = totalLiters > 0 ? totalSpent / totalLiters : 0;
+  let html = `
+    <div class="stat-grid">
+      <div class="stat big"><div class="label">Потрачено на бензин</div><div class="value">${totalSpent.toFixed(0)} <small>₽</small></div></div>
+      <div class="stat"><div class="label">Заправок</div><div class="value">${recs.length}</div></div>
+      <div class="stat"><div class="label">Всего литров</div><div class="value">${totalLiters.toFixed(1)} <small>л</small></div></div>
+      <div class="stat"><div class="label">Средняя цена</div><div class="value">${avgPrice.toFixed(2)} <small>₽/л</small></div></div>
+  `;
+  if(avgCons !== null){
+    html += `
+      <div class="stat"><div class="label">Средний расход</div><div class="value">${avgCons.toFixed(1)} <small>л/100км</small></div></div>
+      <div class="stat"><div class="label">Учтённый пробег</div><div class="value">${distance.toLocaleString('ru-RU')} <small>км</small></div></div>
+    `;
+  }
+  html += '</div>';
+  box.innerHTML = html;
+  renderChart();
+}
+
+/* ===================== ГРАФИК ===================== */
+function monthlyData(mode){
+  const recs = carRecords();
+  if(!recs.length) return [];
+  const groups = {};
+  recs.forEach(r => {
+    const m = (r.date || '').slice(0,7);
+    if(!m) return;
+    if(!groups[m]) groups[m] = { liters:0, cost:0, dist:0, fuel:0 };
+    groups[m].liters += r.liters || 0;
+    groups[m].cost   += r.cost   || 0;
+  });
+  const withOdo = recs.filter(r => r.odometer).sort((a,b) => a.odometer - b.odometer);
+  for(let i = 1; i < withOdo.length; i++){
+    const d = withOdo[i].odometer - withOdo[i-1].odometer;
+    if(d > 0){
+      const m = (withOdo[i].date || '').slice(0,7);
+      if(m && groups[m]){ groups[m].dist += d; groups[m].fuel += withOdo[i].liters; }
+    }
+  }
+  const months = Object.keys(groups).sort().slice(-6);
+  return months.map(m => {
+    const g = groups[m];
+    let value = 0;
+    if(mode === 'cost')   value = g.cost;
+    if(mode === 'liters') value = g.liters;
+    if(mode === 'cons')   value = g.dist > 0 ? g.fuel / g.dist * 100 : 0;
+    return { label: formatMonth(m), value };
+  });
+}
+function renderChart(){
+  const box = document.getElementById('chartBox');
+  const data = monthlyData(chartMode);
+  if(!data.length || data.every(d => d.value === 0)){
+    box.innerHTML = '<p class="empty" style="padding:20px">Нет данных за месяцы</p>';
+    return;
+  }
+  const W=320, H=180, padT=26, padB=26, padX=10, innerH=H-padT-padB;
+  const max = Math.max(...data.map(d => d.value), 1);
+  const n = data.length, gap = n > 1 ? 8 : 0;
+  const barW = (W - padX*2 - gap*(n-1)) / n;
+  let bars = '';
+  data.forEach((d, i) => {
+    const x = padX + i*(barW+gap);
+    const h = Math.max(2, (d.value/max)*innerH);
+    const y = padT + innerH - h;
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="5" fill="url(#barGrad)"/>`;
+    if(d.value > 0){
+      bars += `<text x="${(x+barW/2).toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--accent2)">${formatValue(d.value, chartMode)}</text>`;
+    }
+    bars += `<text x="${(x+barW/2).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="10" fill="var(--muted)">${d.label}</text>`;
+  });
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="var(--accent2)"/><stop offset="100%" stop-color="var(--accent)"/>
+    </linearGradient></defs>${bars}</svg>`;
+}
+document.querySelectorAll('.chart-controls .chip').forEach(b => {
+  b.addEventListener('click', () => {
+    chartMode = b.dataset.mode;
+    document.querySelectorAll('.chart-controls .chip').forEach(x => x.classList.toggle('active', x === b));
+    renderChart();
+  });
+});
+
+/* ===================== КАТАЛОГ ===================== */
+function renderPartsSummary(){
+  const parts = carParts();
+  const el = document.getElementById('partsSummary');
+  if(!parts.length){
+    el.textContent = activeCar().name + ' · нет запчастей';
+    return;
+  }
+  const total = parts.reduce((s,p) => s + (p.cost || 0), 0);
+  el.textContent = `${activeCar().name} · ${parts.length} ${plural(parts.length, ['запчасть','запчасти','запчастей'])} · ${total.toFixed(0)} ₽`;
+}
+
+function renderCategoriesList(){
+  const box = document.getElementById('categoriesList');
+  const parts = carParts();
+  if(!parts.length){
+    box.innerHTML = '<p class="empty">Ещё нет запчастей для этой машины.<br>Нажмите «+ Добавить запчасть».</p>';
+    return;
+  }
+  const groups = {};
+  parts.forEach(p => {
+    const c = partCategory(p);
+    if(!groups[c]) groups[c] = { count: 0, sum: 0 };
+    groups[c].count++;
+    groups[c].sum += p.cost || 0;
+  });
+  const entries = Object.entries(groups).sort((a,b) => {
+    if(a[0] === NO_CAT) return 1;
+    if(b[0] === NO_CAT) return -1;
+    return a[0].localeCompare(b[0], 'ru');
+  });
+  box.innerHTML = entries.map(([name, info]) => {
+    const subcats = subcategoriesInCategory(name);
+    const scInfo = subcats.length ? ` · ${subcats.length} ${plural(subcats.length, ['подкатегория','подкатегории','подкатегорий'])}` : '';
+    return `
+      <button class="category-row" data-cat="${escapeHtml(name)}">
+        <div class="cat-info">
+          <strong>${escapeHtml(name)}</strong>
+          <small>${info.count} ${plural(info.count, ['запчасть','запчасти','запчастей'])}${scInfo} · ${info.sum.toFixed(0)} ₽</small>
+        </div>
+        <span class="chev">›</span>
+      </button>
+    `;
+  }).join('');
+  box.querySelectorAll('[data-cat]').forEach(b => {
+    b.addEventListener('click', () => {
+      activeCategory = b.dataset.cat;
+      activeSubcategory = null;
+      nav('screen-parts-cat');
+    });
+  });
+}
+
+function renderCategoryScreen(){
+  const cat = activeCategory || NO_CAT;
+  document.getElementById('catTitle').textContent = cat;
+  const allParts = partsInCategory(cat);
+  const sum = allParts.reduce((s,p) => s + (p.cost || 0), 0);
+  document.getElementById('catSummary').textContent =
+    `${allParts.length} ${plural(allParts.length, ['запчасть','запчасти','запчастей'])} · ${sum.toFixed(0)} ₽`;
+  const box = document.getElementById('categoryContent');
+  if(!allParts.length){
+    box.innerHTML = '<p class="empty">В этой категории пока пусто.</p>';
+    return;
+  }
+  const subcats = subcategoriesInCategory(cat);
+  const direct = partsDirectInCategory(cat);
+  let html = '';
+  if(subcats.length){
+    html += '<h3 class="section-title">Подкатегории</h3><div id="subcatsList"></div>';
+  }
+  if(direct.length){
+    html += `<h3 class="section-title">${subcats.length ? 'Без подкатегории' : 'Запчасти'}</h3><div id="directPartsList"></div>`;
+  }
+  box.innerHTML = html;
+  if(subcats.length){
+    const scBox = document.getElementById('subcatsList');
+    scBox.innerHTML = subcats.map(sc => {
+      const items = partsInSubcategory(cat, sc);
+      const scSum = items.reduce((s,p) => s + (p.cost || 0), 0);
+      return `
+        <button class="category-row sub" data-subcat="${escapeHtml(sc)}">
+          <div class="cat-info">
+            <strong>📂 ${escapeHtml(sc)}</strong>
+            <small>${items.length} ${plural(items.length, ['запчасть','запчасти','запчастей'])} · ${scSum.toFixed(0)} ₽</small>
+          </div>
+          <span class="chev">›</span>
+        </button>
+      `;
+    }).join('');
+    scBox.querySelectorAll('[data-subcat]').forEach(b => {
+      b.addEventListener('click', () => {
+        activeSubcategory = b.dataset.subcat;
+        nav('screen-parts-subcat');
+      });
+    });
+  }
+  if(direct.length){
+    const dpBox = document.getElementById('directPartsList');
+    dpBox.innerHTML = renderPartCards(direct);
+    attachPartCardHandlers(dpBox, 'screen-parts-cat');
+  }
+}
+
+function renderSubcategoryScreen(){
+  const cat = activeCategory || NO_CAT;
+  const subcat = activeSubcategory || '';
+  document.getElementById('subcatTitle').textContent = subcat || 'Подкатегория';
+  const parts = partsInSubcategory(cat, subcat);
+  const sum = parts.reduce((s,p) => s + (p.cost || 0), 0);
+  document.getElementById('subcatSummary').textContent =
+    `${activeCar().name} · ${cat} · ${parts.length} ${plural(parts.length, ['запчасть','запчасти','запчастей'])} · ${sum.toFixed(0)} ₽`;
+  const box = document.getElementById('subcatPartsList');
+  box.innerHTML = renderPartCards(parts);
+  attachPartCardHandlers(box, 'screen-parts-subcat');
+}
+
+function renderPartCards(parts){
+  if(!parts.length) return '<p class="empty">Пока пусто.</p>';
+  const sorted = [...parts].sort((a,b) => (a.name || '').localeCompare(b.name || ''));
+  return sorted.map(p => {
+    const url = normalizeUrl(p.url);
+    const hasUrl = isValidUrl(url);
+    return `
+      <div class="part-card">
+        <div class="part-head">
+          <span></span>
+          <div class="part-actions">
+            <button class="icon-btn" data-edit="${p.id}" aria-label="Редактировать">✎</button>
+            <button class="icon-btn danger" data-remove="${p.id}" aria-label="Удалить">✕</button>
+          </div>
+        </div>
+        <h4 class="part-name">${escapeHtml(p.name)}</h4>
+        ${p.manufacturer
+          ? `<div class="part-manufacturer">${escapeHtml(p.manufacturer)}</div>`
+          : '<div class="part-manufacturer" style="opacity:.4">производитель не указан</div>'}
+        <div class="part-footer">
+          <div class="part-price">${p.cost ? p.cost.toFixed(0) + ' ₽' : '— ₽'}</div>
+          ${hasUrl ? `<a href="${escapeHtml(url)}" class="part-open" onclick="event.preventDefault(); window.location.href='${escapeHtml(url)}';">Открыть ↗</a>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function attachPartCardHandlers(box, returnTo){
+  box.querySelectorAll('[data-edit]').forEach(b => {
+    b.addEventListener('click', () => {
+      const part = state.parts.find(p => p.id === +b.dataset.edit);
+      if(part) openPartForm(part, returnTo);
+    });
+  });
+  box.querySelectorAll('[data-remove]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const confirmed = await askConfirm('Удалить запчасть?', 'Запись будет удалена из каталога.');
+      if(!confirmed) return;
+      state.parts = state.parts.filter(p => p.id !== +b.dataset.remove);
+      saveState();
+      updateBadges();
+      renderPartsSummary();
+      if(returnTo === 'screen-parts-subcat')      renderSubcategoryScreen();
+      else if(returnTo === 'screen-parts-cat')    renderCategoryScreen();
+      else                                         renderCategoriesList();
+      toast('Удалено');
+    });
+  });
+}
+
+function openPartForm(part, returnTo, prefillCategory, prefillSubcat){
+  editingPartId = part ? part.id : null;
+  partFormReturnTo = returnTo || 'screen-parts';
+  document.getElementById('partEditTitle').textContent = part ? 'Редактировать' : 'Новая запчасть';
+  const f = document.getElementById('partForm');
+  f.reset();
+  if(part){
+    f.category.value = part.category || '';
+    f.subcategory.value = part.subcategory || '';
+    f.name.value = part.name || '';
+    f.manufacturer.value = part.manufacturer || '';
+    f.cost.value = part.cost || '';
+    f.url.value = part.url || '';
+  } else {
+    if(prefillCategory && prefillCategory !== NO_CAT) f.category.value = prefillCategory;
+    if(prefillSubcat) f.subcategory.value = prefillSubcat;
+  }
+  updateCatSuggestions();
+  updateSubcatSuggestions();
+  nav('screen-part-edit');
+}
+
+function updateCatSuggestions(){
+  const dl = document.getElementById('catList');
+  const allCats = new Set(DEFAULT_CATEGORIES);
+  state.parts.forEach(p => { const c = (p.category || '').trim(); if(c) allCats.add(c); });
+  if(activeCategory && activeCategory !== NO_CAT) allCats.add(activeCategory);
+  dl.innerHTML = [...allCats].sort((a,b) => a.localeCompare(b, 'ru')).map(c => `<option value="${escapeHtml(c)}">`).join('');
+}
+function updateSubcatSuggestions(){
+  const cat = document.getElementById('partForm').category.value.trim() || NO_CAT;
+  const subcats = new Set(subcategoriesInCategory(cat));
+  if(activeSubcategory && cat === activeCategory) subcats.add(activeSubcategory);
+  const dl = document.getElementById('subcatList');
+  dl.innerHTML = [...subcats].sort((a,b) => a.localeCompare(b, 'ru')).map(s => `<option value="${escapeHtml(s)}">`).join('');
+}
+document.getElementById('partForm').category.addEventListener('input', updateSubcatSuggestions);
+
+document.getElementById('partForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  const name = f.name.value.trim();
+  if(!name){ toast('Введите название'); return; }
+  const newCategory = f.category.value.trim();
+  const newSubcategory = f.subcategory.value.trim();
+  const data = {
+    category: newCategory,
+    subcategory: newSubcategory,
+    name,
+    manufacturer: f.manufacturer.value.trim(),
+    cost: parseFloat(f.cost.value) || 0,
+    url: f.url.value.trim()
+  };
+  const wasEditing = !!editingPartId;
+  let catChanged = false, subcatChanged = false;
+  if(editingPartId){
+    const p = state.parts.find(p => p.id === editingPartId);
+    if(p){
+      const oldCat = (p.category || '').trim();
+      const oldSubcat = (p.subcategory || '').trim();
+      catChanged = oldCat !== newCategory;
+      subcatChanged = oldSubcat !== newSubcategory;
+      Object.assign(p, data);
+    }
+  } else {
+    state.parts.push({ id: Date.now(), carId: state.activeCar, ...data });
+  }
+  saveState();
+  updateBadges();
+  toast(wasEditing ? 'Обновлено ✓' : 'Сохранено ✓');
+  editingPartId = null;
+  let back = partFormReturnTo;
+  if(wasEditing){
+    if(catChanged) back = 'screen-parts';
+    else if(subcatChanged) back = 'screen-parts-cat';
+  } else {
+    if(partFormReturnTo === 'screen-parts-subcat' && newSubcategory !== activeSubcategory){
+      back = 'screen-parts-cat';
+    }
+  }
+  if(catChanged){ activeCategory = null; activeSubcategory = null; }
+  else if(subcatChanged && wasEditing){ activeSubcategory = null; }
+  setTimeout(() => nav(back), 400);
+});
+
+document.getElementById('addPartBtn').addEventListener('click', () => openPartForm(null, 'screen-parts'));
+document.getElementById('addPartBtn2').addEventListener('click', () => {
+  const prefill = (activeCategory && activeCategory !== NO_CAT) ? activeCategory : '';
+  openPartForm(null, 'screen-parts-cat', prefill);
+});
+document.getElementById('addPartBtn3').addEventListener('click', () => {
+  openPartForm(null, 'screen-parts-subcat', activeCategory, activeSubcategory);
+});
+
+/* ===================== CSV ===================== */
+function downloadCSV(rows, filename){
+  const csv = '\uFEFF' + rows.map(row =>
+    row.map(cell => {
+      const s = String(cell);
+      return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(';')
+  ).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+}
+function exportFuelCSV(){
+  if(!state.records.length){ toast('Нет записей'); return; }
+  const carMap = Object.fromEntries(state.cars.map(c => [c.id, c.name]));
+  const rows = [['Машина','Дата','Литры','Сумма','Цена','Одометр']];
+  [...state.records]
+    .sort((a,b) => (a.date || '').localeCompare(b.date || '') || a.id - b.id)
+    .forEach(r => {
+      rows.push([carMap[r.carId] || '', r.date || '', (r.liters||0).toFixed(2), (r.cost||0).toFixed(2), (r.price||0).toFixed(2), r.odometer || '']);
+    });
+  downloadCSV(rows, 'fuel_' + new Date().toISOString().slice(0,10) + '.csv');
+  toast('CSV заправок готов');
+}
+function exportOilCSV(){
+  if(!state.oilChanges.length){ toast('Нет записей о замене масла'); return; }
+  const carMap = Object.fromEntries(state.cars.map(c => [c.id, c.name]));
+  const rows = [['Машина','Дата','Одометр','Масло','Стоимость','Заметки']];
+  [...state.oilChanges]
+    .sort((a,b) => (a.date || '').localeCompare(b.date || '') || a.id - b.id)
+    .forEach(o => {
+      rows.push([carMap[o.carId] || '', o.date || '', o.odometer || '', o.oil || '', (o.cost||0).toFixed(2), o.notes || '']);
+    });
+  downloadCSV(rows, 'oil_' + new Date().toISOString().slice(0,10) + '.csv');
+  toast('CSV замен масла готов');
+}
+function exportPartsCSV(){
+  if(!state.parts.length){ toast('Нет запчастей'); return; }
+  const carMap = Object.fromEntries(state.cars.map(c => [c.id, c.name]));
+  const rows = [['Машина','Категория','Подкатегория','Название','Производитель','Стоимость','Ссылка']];
+  [...state.parts]
+    .sort((a,b) =>
+      (carMap[a.carId] || '').localeCompare(carMap[b.carId] || '') ||
+      (a.category || '').localeCompare(b.category || '') ||
+      (a.subcategory || '').localeCompare(b.subcategory || '') ||
+      (a.name || '').localeCompare(b.name || ''))
+    .forEach(p => {
+      rows.push([carMap[p.carId] || '', p.category || '', p.subcategory || '', p.name || '', p.manufacturer || '', (p.cost||0).toFixed(2), p.url || '']);
+    });
+  downloadCSV(rows, 'parts_' + new Date().toISOString().slice(0,10) + '.csv');
+  toast('CSV запчастей готов');
+}
+
+/* ===================== ХЕЛПЕРЫ ===================== */
+function formatDate(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+function formatMonth(ym){
+  const [y, m] = ym.split('-');
+  const d = new Date(+y, +m - 1, 1);
+  return d.toLocaleDateString('ru', { month: 'short' }).replace('.', '');
+}
+function formatValue(v, mode){
+  if(mode === 'cost')   return v >= 1000 ? (v/1000).toFixed(1) + 'к' : Math.round(v) + '₽';
+  if(mode === 'liters') return v.toFixed(0) + 'л';
+  return v.toFixed(1);
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function normalizeUrl(url){
+  if(!url) return '';
+  url = String(url).trim();
+  if(!url) return '';
+  if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  return url;
+}
+function isValidUrl(url){
+  try { new URL(url); return true; } catch { return false; }
+}
+function plural(n, forms){
+  const n10 = n % 10, n100 = n % 100;
+  if(n10 === 1 && n100 !== 11) return forms[0];
+  if(n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return forms[1];
+  return forms[2];
+}
+
+/* ===================== ТОСТ ===================== */
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+/* ===================== НАСТРОЙКИ ===================== */
+document.querySelectorAll('#themePicker [data-theme]').forEach(b => {
+  b.addEventListener('click', () => {
+    state.theme = b.dataset.theme;
+    saveState();
+    applyTheme();
+  });
+});
+document.getElementById('addCarBtn').addEventListener('click', addCar);
+document.getElementById('exportFuelBtn').addEventListener('click', exportFuelCSV);
+document.getElementById('exportOilBtn').addEventListener('click', exportOilCSV);
+document.getElementById('exportPartsBtn').addEventListener('click', exportPartsCSV);
+
+/* ===================== СТАРТ ===================== */
+applyTheme();
+renderCarPicker();
+updateBadges();
+renderHomeOilReminder();
+form.date.value = new Date().toISOString().slice(0,10);
+
+/* ===================== SERVICE WORKER (отключён для WebView) ===================== */
+const swStatusEl = document.getElementById('swStatus');
+if (swStatusEl) {
+  swStatusEl.textContent = 'ℹ️ Локальный режим (WebView) — офлайн-кэш не требуется';
+}
+</script>
+</body>
+</html>
