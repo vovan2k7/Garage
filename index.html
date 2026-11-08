@@ -8,12 +8,12 @@
 <meta name="apple-mobile-web-app-title" content="Мой гараж">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0f172a">
-<meta name="description" content="Учёт заправок, замены масла и каталог запчастей">
+<meta name="description" content="Учёт заправок, замены масла, свечей и каталог запчастей">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-<title>Мой гараж — бензин, масло и запчасти</title>
+<title>Мой гараж — бензин, масло, свечи и запчасти</title>
 <style>
 :root, html[data-theme="dark"]{
   --bg1:#0f172a; --bg2:#1e293b; --card:#1e293b; --card2:#334155;
@@ -331,7 +331,7 @@ label input::placeholder{color:var(--muted);opacity:.6}
   <!-- ========== ГЛАВНЫЙ ========== -->
   <section id="screen-home" class="screen active">
     <h1>⛽ Мой гараж</h1>
-    <p class="sub">Топливо, масло и запчасти</p>
+    <p class="sub">Топливо, масло, свечи и запчасти</p>
     <div class="car-picker" id="carPicker"></div>
     <div id="homeOilReminder"></div>
     <nav class="menu">
@@ -343,6 +343,11 @@ label input::placeholder{color:var(--muted);opacity:.6}
       <button class="menu-btn" data-nav="screen-oil">
         <span class="icon">🛢️</span>
         <div class="text"><strong>Замена масла</strong><small data-oil-badge>История и пробег</small></div>
+        <span class="chev">›</span>
+      </button>
+      <button class="menu-btn" data-nav="screen-plugs">
+        <span class="icon">⚡</span>
+        <div class="text"><strong>Замена свечей</strong><small data-plugs-badge>История и пробег</small></div>
         <span class="chev">›</span>
       </button>
       <button class="menu-btn" data-nav="screen-parts">
@@ -413,6 +418,37 @@ label input::placeholder{color:var(--muted);opacity:.6}
       <label>Масло (марка, вязкость) <input name="oil" placeholder="Mobil 1 5W-30" required></label>
       <label>Стоимость (₽) <input type="number" name="cost" inputmode="decimal" step="0.01" min="0" placeholder="4500"></label>
       <label>Заметки <input name="notes" placeholder="Замена фильтра, доливка и т.д."></label>
+      <button type="submit" class="submit">Сохранить</button>
+    </form>
+    <p class="hint">Одометр подставится автоматически из последней заправки, если он там был указан.</p>
+  </section>
+
+  <!-- ========== ИСТОРИЯ ЗАМЕНЫ СВЕЧЕЙ ========== -->
+  <section id="screen-plugs" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-home">‹</button>
+      <h2>Замена свечей</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <p class="sub" id="plugsCarLabel"></p>
+    <div id="plugsReminderBanner"></div>
+    <div id="plugsList"></div>
+    <button class="submit" id="addPlugsBtn" style="margin-top:16px">+ Добавить замену свечей</button>
+  </section>
+
+  <!-- ========== ФОРМА ЗАМЕНЫ СВЕЧЕЙ ========== -->
+  <section id="screen-plugs-edit" class="screen">
+    <div class="screen-header">
+      <button class="back" data-nav="screen-plugs">‹</button>
+      <h2 id="plugsEditTitle">Новая замена</h2>
+      <button class="home-btn" data-nav="screen-home" aria-label="На главную">🏠</button>
+    </div>
+    <form id="plugsForm" autocomplete="off">
+      <label>Дата <input type="date" name="date" required></label>
+      <label>Одометр (км) <input type="number" name="odometer" inputmode="numeric" step="1" min="0" placeholder="120000"></label>
+      <label>Свечи (марка, модель) <input name="plugs" placeholder="NGK BKR6E" required></label>
+      <label>Стоимость (₽) <input type="number" name="cost" inputmode="decimal" step="0.01" min="0" placeholder="2000"></label>
+      <label>Заметки <input name="notes" placeholder="Количество, момент затяжки и т.д."></label>
       <button type="submit" class="submit">Сохранить</button>
     </form>
     <p class="hint">Одометр подставится автоматически из последней заправки, если он там был указан.</p>
@@ -522,6 +558,7 @@ label input::placeholder{color:var(--muted);opacity:.6}
     <h3 class="section-title">Экспорт</h3>
     <button class="submit secondary" id="exportFuelBtn">⬇️ Заправки (CSV)</button>
     <button class="submit secondary" id="exportOilBtn" style="margin-top:8px">⬇️ Замены масла (CSV)</button>
+    <button class="submit secondary" id="exportPlugsBtn" style="margin-top:8px">⬇️ Замены свечей (CSV)</button>
     <button class="submit secondary" id="exportPartsBtn" style="margin-top:8px">⬇️ Запчасти (CSV)</button>
     <p class="hint">Файл сохранится через «Поделиться» → «Сохранить в Файлы».</p>
     <p class="hint" id="swStatus" style="margin-top:20px"></p>
@@ -551,6 +588,8 @@ const DEFAULT_CATEGORIES = ['Масло и жидкости','Фильтры','�
 const NO_CAT = 'Без категории';
 const OIL_INTERVAL_KM = 10000;
 const OIL_INTERVAL_DAYS = 365;
+const PLUG_INTERVAL_KM = 30000;
+const PLUG_INTERVAL_DAYS = 730;
 
 const CAR_COLORS = [
   '#ef4444', // red
@@ -567,6 +606,7 @@ let state = loadState();
 let chartMode = 'cost';
 let editingPartId = null;
 let editingOilId = null;
+let editingPlugsId = null;
 let activeCategory = null;
 let activeSubcategory = null;
 let partFormReturnTo = 'screen-parts';
@@ -577,6 +617,7 @@ function loadState(){
     if(s && Array.isArray(s.cars) && s.cars.length){
       if(!Array.isArray(s.parts)) s.parts = [];
       if(!Array.isArray(s.oilChanges)) s.oilChanges = [];
+      if(!Array.isArray(s.plugsChanges)) s.plugsChanges = [];
       s.parts.forEach(p => { if(typeof p.subcategory !== 'string') p.subcategory = ''; });
       // Миграция цветов для старых пользователей
       s.cars.forEach(c => { if(!c.color) c.color = CAR_COLORS[0]; });
@@ -592,6 +633,7 @@ function loadState(){
     records: old.map(r => ({ ...r, carId })),
     parts: [],
     oilChanges: [],
+    plugsChanges: [],
     theme: 'auto'
   };
 }
@@ -604,6 +646,7 @@ function activeCar(){ return state.cars.find(c => c.id === state.activeCar) || s
 function carRecords(){ return state.records.filter(r => r.carId === state.activeCar); }
 function carParts(){ return state.parts.filter(p => p.carId === state.activeCar); }
 function carOilChanges(){ return state.oilChanges.filter(o => o.carId === state.activeCar); }
+function carPlugsChanges(){ return state.plugsChanges.filter(o => o.carId === state.activeCar); }
 
 function partCategory(p){ return (p.category || '').trim() || NO_CAT; }
 function partSubcategory(p){ return (p.subcategory || '').trim(); }
@@ -719,9 +762,10 @@ function nav(id){
   if(!el) return;
   el.classList.add('active');
   window.scrollTo(0, 0);
-  if(id === 'screen-home'){ renderCarPicker(); updateBadges(); renderHomeOilReminder(); }
+  if(id === 'screen-home'){ renderCarPicker(); updateBadges(); renderHomeReminders(); }
   if(id === 'screen-add') document.getElementById('addCarLabel').textContent = activeCar().name;
   if(id === 'screen-oil'){ document.getElementById('oilCarLabel').textContent = activeCar().name; renderOilList(); }
+  if(id === 'screen-plugs'){ document.getElementById('plugsCarLabel').textContent = activeCar().name; renderPlugsList(); }
   if(id === 'screen-history'){ document.getElementById('historyCarLabel').textContent = activeCar().name; renderHistory(); }
   if(id === 'screen-stats'){ document.getElementById('statsCarLabel').textContent = activeCar().name; renderStats(); }
   if(id === 'screen-settings'){ renderCarsList(); applyTheme(); }
@@ -767,9 +811,10 @@ function renderCarPickerInto(boxId){
       renderCarPickerInto('carPicker');
       renderCarPickerInto('partsCarPicker');
       updateBadges();
-      renderHomeOilReminder();
+      renderHomeReminders();
       if(document.getElementById('screen-parts').classList.contains('active')){ renderPartsSummary(); renderCategoriesList(); }
       if(document.getElementById('screen-oil').classList.contains('active')){ document.getElementById('oilCarLabel').textContent = activeCar().name; renderOilList(); }
+      if(document.getElementById('screen-plugs').classList.contains('active')){ document.getElementById('plugsCarLabel').textContent = activeCar().name; renderPlugsList(); }
       if(document.getElementById('screen-parts-cat').classList.contains('active')) nav('screen-parts');
       if(document.getElementById('screen-parts-subcat').classList.contains('active')) nav('screen-parts');
     });
@@ -785,6 +830,9 @@ function updateBadges(){
   const oilCnt = carOilChanges().length;
   const oilEl = document.querySelector('[data-oil-badge]');
   if(oilEl) oilEl.textContent = oilCnt ? oilCnt + ' записей' : 'История и пробег';
+  const plugsCnt = carPlugsChanges().length;
+  const plugsEl = document.querySelector('[data-plugs-badge]');
+  if(plugsEl) plugsEl.textContent = plugsCnt ? plugsCnt + ' записей' : 'История и пробег';
 }
 
 /* ===================== МАШИНЫ ===================== */
@@ -800,7 +848,7 @@ async function addCar(){
   renderCarPickerInto('partsCarPicker');
   renderCarsList();
   updateBadges();
-  renderHomeOilReminder();
+  renderHomeReminders();
   toast('Машина добавлена');
 }
 
@@ -855,22 +903,24 @@ function renderCarsList(){
       const rc = state.records.filter(r => r.carId === car.id).length;
       const pc = state.parts.filter(p => p.carId === car.id).length;
       const oc = state.oilChanges.filter(o => o.carId === car.id).length;
+      const plc = state.plugsChanges.filter(o => o.carId === car.id).length;
       const confirmed = await askConfirm(
         'Удалить машину?',
-        `«${car.name}» будет удалена вместе с записями:\nЗаправок: ${rc}\nЗапчастей: ${pc}\nЗамен масла: ${oc}`
+        `«${car.name}» будет удалена вместе с записями:\nЗаправок: ${rc}\nЗапчастей: ${pc}\nЗамен масла: ${oc}\nЗамен свечей: ${plc}`
       );
       if(!confirmed) return;
       state.cars = state.cars.filter(c => c.id !== car.id);
       state.records = state.records.filter(r => r.carId !== car.id);
       state.parts = state.parts.filter(p => p.carId !== car.id);
       state.oilChanges = state.oilChanges.filter(o => o.carId !== car.id);
+      state.plugsChanges = state.plugsChanges.filter(o => o.carId !== car.id);
       if(state.activeCar === car.id) state.activeCar = state.cars[0].id;
       saveState();
       renderCarsList();
       renderCarPickerInto('carPicker');
       renderCarPickerInto('partsCarPicker');
       updateBadges();
-      renderHomeOilReminder();
+      renderHomeReminders();
       toast('Машина удалена');
     });
   });
@@ -914,7 +964,7 @@ form.addEventListener('submit', e => {
   setTimeout(() => nav('screen-home'), 600);
 });
 
-/* ===================== НАПОМИНАНИЕ О МАСЛЕ ===================== */
+/* ===================== НАПОМИНАНИЯ ===================== */
 function getOilReminderInfo(){
   const changes = carOilChanges().sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id);
   if(!changes.length) return null;
@@ -944,12 +994,50 @@ function getOilReminderInfo(){
   if(status === 'ok') return null;
   return { status, msg, details, lastOil: last, kmSince, daysSince };
 }
-function renderHomeOilReminder(){
+
+function getPlugsReminderInfo(){
+  const changes = carPlugsChanges().sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+  if(!changes.length) return null;
+  const last = changes[0];
+  const maxFuelOdo = carRecords().reduce((m, r) => Math.max(m, r.odometer || 0), 0);
+  const maxPlugsOdo = changes.reduce((m, o) => Math.max(m, o.odometer || 0), 0);
+  const currentOdo = Math.max(maxFuelOdo, maxPlugsOdo);
+  const lastOdo = last.odometer || 0;
+  const kmSince = currentOdo > lastOdo ? currentOdo - lastOdo : 0;
+  const lastDate = new Date(last.date);
+  const now = new Date();
+  const daysSince = isNaN(lastDate) ? 0 : Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+  let status = 'ok', msg = '', details = '';
+  if(kmSince >= PLUG_INTERVAL_KM || daysSince >= PLUG_INTERVAL_DAYS){
+    status = 'overdue';
+    const reasons = [];
+    if(kmSince >= PLUG_INTERVAL_KM) reasons.push(`пробег ${kmSince.toLocaleString('ru-RU')} км`);
+    if(daysSince >= PLUG_INTERVAL_DAYS) reasons.push(`${daysSince} дн.`);
+    msg = '⚠️ Пора менять свечи!';
+    details = `С последней замены: ${reasons.join(' и ')}.`;
+  } else if(kmSince >= PLUG_INTERVAL_KM - 3000 || daysSince >= PLUG_INTERVAL_DAYS - 60){
+    status = 'soon';
+    const remainKm = Math.max(0, PLUG_INTERVAL_KM - kmSince);
+    msg = '⏰ Скоро замена свечей';
+    details = remainKm > 0 ? `Осталось около ${remainKm.toLocaleString('ru-RU')} км до порога.` : 'Срок подходит к концу.';
+  }
+  if(status === 'ok') return null;
+  return { status, msg, details, lastChange: last, kmSince, daysSince };
+}
+
+function renderHomeReminders(){
   const box = document.getElementById('homeOilReminder');
   if(!box) return;
-  const info = getOilReminderInfo();
-  if(!info){ box.innerHTML = ''; return; }
-  box.innerHTML = `<div class="warning-banner ${info.status === 'overdue' ? 'danger' : ''}">${info.msg}<small>${info.details} Нажмите «Замена масла», чтобы добавить запись.</small></div>`;
+  let html = '';
+  const oilInfo = getOilReminderInfo();
+  if(oilInfo){
+    html += `<div class="warning-banner ${oilInfo.status === 'overdue' ? 'danger' : ''}">${oilInfo.msg}<small>${oilInfo.details} Нажмите «Замена масла», чтобы добавить запись.</small></div>`;
+  }
+  const plugsInfo = getPlugsReminderInfo();
+  if(plugsInfo){
+    html += `<div class="warning-banner ${plugsInfo.status === 'overdue' ? 'danger' : ''}">${plugsInfo.msg}<small>${plugsInfo.details} Нажмите «Замена свечей», чтобы добавить запись.</small></div>`;
+  }
+  box.innerHTML = html;
 }
 
 /* ===================== ЗАМЕНА МАСЛА ===================== */
@@ -992,7 +1080,7 @@ function renderOilList(){
       saveState();
       updateBadges();
       renderOilList();
-      renderHomeOilReminder();
+      renderHomeReminders();
       toast('Удалено');
     });
   });
@@ -1044,6 +1132,100 @@ document.getElementById('oilForm').addEventListener('submit', e => {
   toast(wasEditing ? 'Обновлено ✓' : 'Сохранено ✓');
   editingOilId = null;
   setTimeout(() => nav('screen-oil'), 400);
+});
+
+/* ===================== ЗАМЕНА СВЕЧЕЙ ===================== */
+function renderPlugsList(){
+  const box = document.getElementById('plugsList');
+  const bannerBox = document.getElementById('plugsReminderBanner');
+  const info = getPlugsReminderInfo();
+  if(bannerBox){
+    bannerBox.innerHTML = info
+      ? `<div class="warning-banner ${info.status === 'overdue' ? 'danger' : ''}">${info.msg}<small>${info.details}</small></div>`
+      : '';
+  }
+  const changes = carPlugsChanges().sort((a,b) => (b.date || '').localeCompare(a.date || '') || b.id - a.id);
+  if(!changes.length){
+    box.innerHTML = '<p class="empty">Нет записей о замене свечей.<br>Добавьте первую замену.</p>';
+    return;
+  }
+  box.innerHTML = changes.map(o => `
+    <div class="record">
+      <div class="record-info">
+        <strong>${escapeHtml(o.plugs)} · ${o.cost ? o.cost.toFixed(0) + ' ₽' : '—'}</strong>
+        <small>${formatDate(o.date)}${o.odometer ? ' · ' + o.odometer.toLocaleString('ru-RU') + ' км' : ''}${o.notes ? ' · ' + escapeHtml(o.notes) : ''}</small>
+      </div>
+      <button class="icon-btn" data-edit-plugs="${o.id}" aria-label="Редактировать">✎</button>
+      <button class="del" data-del-plugs="${o.id}" aria-label="Удалить">✕</button>
+    </div>
+  `).join('');
+
+  box.querySelectorAll('[data-edit-plugs]').forEach(b => {
+    b.addEventListener('click', () => {
+      const entry = state.plugsChanges.find(o => o.id === +b.dataset.editPlugs);
+      if(entry) openPlugsForm(entry);
+    });
+  });
+  box.querySelectorAll('[data-del-plugs]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const confirmed = await askConfirm('Удалить запись?', 'Запись о замене свечей будет удалена.');
+      if(!confirmed) return;
+      state.plugsChanges = state.plugsChanges.filter(o => o.id !== +b.dataset.delPlugs);
+      saveState();
+      updateBadges();
+      renderPlugsList();
+      renderHomeReminders();
+      toast('Удалено');
+    });
+  });
+}
+
+function openPlugsForm(entry = null){
+  editingPlugsId = entry ? entry.id : null;
+  document.getElementById('plugsEditTitle').textContent = entry ? 'Редактировать' : 'Новая замена';
+  const f = document.getElementById('plugsForm');
+  f.reset();
+  if(entry){
+    f.date.value = entry.date || '';
+    f.odometer.value = entry.odometer || '';
+    f.plugs.value = entry.plugs || '';
+    f.cost.value = entry.cost || '';
+    f.notes.value = entry.notes || '';
+  } else {
+    f.date.value = new Date().toISOString().slice(0,10);
+    const lastFuel = carRecords().filter(r => r.odometer).sort((a,b) => (b.date||'').localeCompare(a.date||''))[0];
+    const lastPlugs = carPlugsChanges().filter(o => o.odometer).sort((a,b) => (b.date||'').localeCompare(a.date||''))[0];
+    const maxOdo = Math.max(lastFuel ? lastFuel.odometer : 0, lastPlugs ? lastPlugs.odometer : 0);
+    if(maxOdo > 0) f.odometer.value = maxOdo;
+  }
+  nav('screen-plugs-edit');
+}
+
+document.getElementById('addPlugsBtn').addEventListener('click', () => openPlugsForm());
+document.getElementById('plugsForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  const plugs = f.plugs.value.trim();
+  if(!plugs){ toast('Введите название свечей'); return; }
+  const data = {
+    date: f.date.value || new Date().toISOString().slice(0,10),
+    odometer: parseFloat(f.odometer.value) || null,
+    plugs,
+    cost: parseFloat(f.cost.value) || 0,
+    notes: f.notes.value.trim()
+  };
+  const wasEditing = !!editingPlugsId;
+  if(editingPlugsId){
+    const entry = state.plugsChanges.find(o => o.id === editingPlugsId);
+    if(entry) Object.assign(entry, data);
+  } else {
+    state.plugsChanges.push({ id: Date.now(), carId: state.activeCar, ...data });
+  }
+  saveState();
+  updateBadges();
+  toast(wasEditing ? 'Обновлено ✓' : 'Сохранено ✓');
+  editingPlugsId = null;
+  setTimeout(() => nav('screen-plugs'), 400);
 });
 
 /* ===================== ИСТОРИЯ ЗАПРАВОК ===================== */
@@ -1477,6 +1659,18 @@ function exportOilCSV(){
   downloadCSV(rows, 'oil_' + new Date().toISOString().slice(0,10) + '.csv');
   toast('CSV замен масла готов');
 }
+function exportPlugsCSV(){
+  if(!state.plugsChanges.length){ toast('Нет записей о замене свечей'); return; }
+  const carMap = Object.fromEntries(state.cars.map(c => [c.id, c.name]));
+  const rows = [['Машина','Дата','Одометр','Свечи','Стоимость','Заметки']];
+  [...state.plugsChanges]
+    .sort((a,b) => (a.date || '').localeCompare(b.date || '') || a.id - b.id)
+    .forEach(o => {
+      rows.push([carMap[o.carId] || '', o.date || '', o.odometer || '', o.plugs || '', (o.cost||0).toFixed(2), o.notes || '']);
+    });
+  downloadCSV(rows, 'plugs_' + new Date().toISOString().slice(0,10) + '.csv');
+  toast('CSV замен свечей готов');
+}
 function exportPartsCSV(){
   if(!state.parts.length){ toast('Нет запчастей'); return; }
   const carMap = Object.fromEntries(state.cars.map(c => [c.id, c.name]));
@@ -1551,13 +1745,14 @@ document.querySelectorAll('#themePicker [data-theme]').forEach(b => {
 document.getElementById('addCarBtn').addEventListener('click', addCar);
 document.getElementById('exportFuelBtn').addEventListener('click', exportFuelCSV);
 document.getElementById('exportOilBtn').addEventListener('click', exportOilCSV);
+document.getElementById('exportPlugsBtn').addEventListener('click', exportPlugsCSV);
 document.getElementById('exportPartsBtn').addEventListener('click', exportPartsCSV);
 
 /* ===================== СТАРТ ===================== */
 applyTheme();
 renderCarPicker();
 updateBadges();
-renderHomeOilReminder();
+renderHomeReminders();
 form.date.value = new Date().toISOString().slice(0,10);
 
 /* ===================== SERVICE WORKER (отключён для WebView) ===================== */
